@@ -9,8 +9,7 @@ const io = readline.createInterface({
  * Represents a game of Tic Tac Toe.
  * Board size is hard-coded at 3.
  */
-export class TTTGame {
-  private playerSymbols = [' ','X','O']; //for display
+class Model {
   private gameBoard:number[][];
   private currentPlayer:number = 0;
   private winner:number = undefined;
@@ -73,49 +72,30 @@ export class TTTGame {
     return this.winner;
   }
 
-  //starts the game
-  play() {
-    this.printBoard();
-    this.takeTurn();    
-  }
 
-  takeTurn() {
-    this.printPrompt();
-    io.question('> ', (input) => {
-      try {
-        let cell = input.split(',');
-        //make a move!
-        let result = this.makeMove(Number(cell[0]),Number(cell[1]));
-        if(result){ //legal move
-          this.printBoard();
-          if(this.getWinner() !== undefined){
-            this.printWinner(this.getWinner());
-            io.close();
-            return; //end
-          }
-        }
-      } catch(e) {} //for parsing errors
+}
 
-      this.takeTurn(); //recurse!
-    })
-  }
+class View {
+  private playerSymbols = [' ','X','O']; //for display
+
+  constructor(private game:Model) {}
 
   printBoard() {
     //print the board
     console.log("    0   1   2")
-    for(let i=0; i<this.size; i++) {
+    for(let i=0; i<this.game.size; i++) {
       let row = i+"   ";
-      for(let j=0; j<this.size; j++) {
+      for(let j=0; j<this.game.size; j++) {
 
-        let player = this.getPiece(i,j);
+        let player = this.game.getPiece(i,j);
         if(player === undefined) player = -1;
         row += this.playerSymbols[player+1];
 
-        if(j < this.size - 1) 
+        if(j < this.game.size - 1) 
           row += " | ";
       }
       console.log(row);
-      if(i < this.size -1)
+      if(i < this.game.size -1)
         console.log("   -----------");
     }
     console.log("");
@@ -130,7 +110,42 @@ export class TTTGame {
     let player = this.playerSymbols[winner+1]
     console.log(player+" is the winner!");
   }
+
 }
 
-let game:TTTGame = new TTTGame();
-game.play();
+class Controller {
+  constructor(private game:Model, private view:View){}
+
+  //starts the game
+  play() {
+    this.view.printBoard();
+    this.takeTurn();    
+  }
+
+  takeTurn() {
+    this.view.printPrompt();
+    io.question('> ', (input) => {
+      try {
+        let cell = input.split(',');
+        //make a move!
+        let result = this.game.makeMove(Number(cell[0]),Number(cell[1]));
+        if(result){ //legal move
+          this.view.printBoard();
+          if(this.game.getWinner() !== undefined){
+            this.view.printWinner(this.game.getWinner());
+            io.close();
+            return; //end
+          }
+        }
+      } catch(e) {} //for parsing errors
+
+      this.takeTurn(); //recurse!
+    })
+  }  
+}
+
+let game:Model = new Model();
+let view:View = new View(game);
+let ctrl:Controller = new Controller(game, view);
+
+ctrl.play();
